@@ -18,6 +18,7 @@ type CartItem = Product & {
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function getProducts() {
@@ -37,6 +38,10 @@ export default function Home() {
     getProducts();
   }, []);
 
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   function getImageSrc(image: string) {
     if (image.startsWith("http")) return image;
     return `/${image.trim()}`;
@@ -49,7 +54,6 @@ export default function Home() {
     }
 
     const cart: CartItem[] = JSON.parse(localStorage.getItem("cart") || "[]");
-
     const existing = cart.find((item) => item.id === product.id);
 
     if (existing) {
@@ -57,13 +61,9 @@ export default function Home() {
         alert("Stock insuffisant");
         return;
       }
-
       existing.quantity += 1;
     } else {
-      cart.push({
-        ...product,
-        quantity: 1,
-      });
+      cart.push({ ...product, quantity: 1 });
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -136,55 +136,70 @@ export default function Home() {
       </header>
 
       <section id="products" className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8 flex items-end justify-between gap-4">
+        <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl md:text-5xl font-black">
-              Nos sacs
-            </h2>
+            <h2 className="text-3xl md:text-5xl font-black">Nos sacs</h2>
+            <p className="mt-2 text-gray-600">Sélection officielle GABIT</p>
+          </div>
+
+          <input
+            type="text"
+            placeholder="Rechercher un sac..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full md:w-96 rounded-full bg-white px-6 py-4 shadow border border-black/5 text-[#211815]"
+          />
+        </div>
+
+        {filteredProducts.length === 0 ? (
+          <div className="rounded-[2rem] bg-white p-10 text-center shadow">
+            <h3 className="text-2xl font-black">Aucun produit trouvé</h3>
             <p className="mt-2 text-gray-600">
-              Sélection officielle GABIT
+              Essaie un autre nom de sac.
             </p>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition"
-            >
-              <div className="h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
-                <img
-                  src={getImageSrc(product.image)}
-                  alt={product.name}
-                  className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-                />
-              </div>
-
-              <div className="p-5">
-                <h3 className="text-xl font-black">{product.name}</h3>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-2xl font-black text-[#4db8df]">
-                    {product.price} DA
-                  </p>
-
-                  <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
-                    Stock : {product.stock}
-                  </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition"
+              >
+                <div className="h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
+                  <img
+                    src={getImageSrc(product.image)}
+                    alt={product.name}
+                    className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
+                  />
                 </div>
 
-                <button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock <= 0}
-                  className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {product.stock > 0 ? "Ajouter au panier" : "Rupture de stock"}
-                </button>
+                <div className="p-5">
+                  <h3 className="text-xl font-black">{product.name}</h3>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-2xl font-black text-[#4db8df]">
+                      {product.price} DA
+                    </p>
+
+                    <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
+                      Stock : {product.stock}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock <= 0}
+                    className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {product.stock > 0
+                      ? "Ajouter au panier"
+                      : "Rupture de stock"}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );
