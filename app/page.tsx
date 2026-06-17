@@ -20,6 +20,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   useEffect(() => {
     async function getProducts() {
@@ -42,9 +43,17 @@ export default function Home() {
     setFavorites(savedFavorites);
   }, []);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesFavorite = showOnlyFavorites
+      ? favorites.includes(product.id)
+      : true;
+
+    return matchesSearch && matchesFavorite;
+  });
 
   function getImageSrc(image: string) {
     if (image.startsWith("http")) return image;
@@ -62,6 +71,10 @@ export default function Home() {
 
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+
+    if (showOnlyFavorites && updatedFavorites.length === 0) {
+      setShowOnlyFavorites(false);
+    }
   }
 
   function addToCart(product: Product) {
@@ -111,9 +124,16 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#f7f1e8] px-4 py-3 font-bold shadow">
+              <button
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                className={`rounded-full px-4 py-3 font-bold shadow transition ${
+                  showOnlyFavorites
+                    ? "bg-[#4db8df] text-white"
+                    : "bg-[#f7f1e8] text-[#211815] hover:bg-[#4db8df] hover:text-white"
+                }`}
+              >
                 ⭐ {favorites.length}
-              </span>
+              </button>
 
               <Link
                 href="/cart"
@@ -162,8 +182,14 @@ export default function Home() {
       <section id="products" className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl md:text-5xl font-black">Nos sacs</h2>
-            <p className="mt-2 text-gray-600">Sélection officielle GABIT</p>
+            <h2 className="text-3xl md:text-5xl font-black">
+              {showOnlyFavorites ? "Mes favoris" : "Nos sacs"}
+            </h2>
+            <p className="mt-2 text-gray-600">
+              {showOnlyFavorites
+                ? "Vos sacs préférés"
+                : "Sélection officielle GABIT"}
+            </p>
           </div>
 
           <input
@@ -175,10 +201,27 @@ export default function Home() {
           />
         </div>
 
+        {showOnlyFavorites && favorites.length > 0 && (
+          <button
+            onClick={() => setShowOnlyFavorites(false)}
+            className="mb-6 rounded-full bg-[#211815] px-5 py-3 text-white font-bold"
+          >
+            Voir tous les sacs
+          </button>
+        )}
+
         {filteredProducts.length === 0 ? (
           <div className="rounded-[2rem] bg-white p-10 text-center shadow">
-            <h3 className="text-2xl font-black">Aucun produit trouvé</h3>
-            <p className="mt-2 text-gray-600">Essaie un autre nom de sac.</p>
+            <h3 className="text-2xl font-black">
+              {showOnlyFavorites
+                ? "Aucun favori pour le moment"
+                : "Aucun produit trouvé"}
+            </h3>
+            <p className="mt-2 text-gray-600">
+              {showOnlyFavorites
+                ? "Clique sur ☆ pour ajouter un sac aux favoris."
+                : "Essaie un autre nom de sac."}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
