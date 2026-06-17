@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f7f1e8] text-[#211815]">
-      <header className="relative overflow-hidden px-6 py-10">
+      <header className="px-6 py-10">
         <div className="mx-auto max-w-7xl rounded-[2rem] bg-white/70 shadow-xl border border-white p-6 md:p-10">
           <nav className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -154,9 +154,7 @@ export default function Home() {
         {filteredProducts.length === 0 ? (
           <div className="rounded-[2rem] bg-white p-10 text-center shadow">
             <h3 className="text-2xl font-black">Aucun produit trouvé</h3>
-            <p className="mt-2 text-gray-600">
-              Essaie un autre nom de sac.
-            </p>
+            <p className="mt-2 text-gray-600">Essaie un autre nom de sac.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
