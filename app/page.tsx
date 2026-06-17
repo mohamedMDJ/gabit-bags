@@ -19,6 +19,7 @@ type CartItem = Product & {
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
     async function getProducts() {
@@ -36,6 +37,9 @@ export default function Home() {
     }
 
     getProducts();
+
+    const savedFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    setFavorites(savedFavorites);
   }, []);
 
   const filteredProducts = products.filter((product) =>
@@ -45,6 +49,19 @@ export default function Home() {
   function getImageSrc(image: string) {
     if (image.startsWith("http")) return image;
     return `/${image.trim()}`;
+  }
+
+  function toggleFavorite(productId: number) {
+    let updatedFavorites: number[];
+
+    if (favorites.includes(productId)) {
+      updatedFavorites = favorites.filter((id) => id !== productId);
+    } else {
+      updatedFavorites = [...favorites, productId];
+    }
+
+    setFavorites(updatedFavorites);
+    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
   }
 
   function addToCart(product: Product) {
@@ -61,6 +78,7 @@ export default function Home() {
         alert("Stock insuffisant");
         return;
       }
+
       existing.quantity += 1;
     } else {
       cart.push({ ...product, quantity: 1 });
@@ -92,12 +110,18 @@ export default function Home() {
               </div>
             </div>
 
-            <Link
-              href="/cart"
-              className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
-            >
-              Panier
-            </Link>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-[#f7f1e8] px-4 py-3 font-bold shadow">
+                ⭐ {favorites.length}
+              </span>
+
+              <Link
+                href="/cart"
+                className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
+              >
+                Panier
+              </Link>
+            </div>
           </nav>
 
           <section className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -163,7 +187,14 @@ export default function Home() {
                 key={product.id}
                 className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition"
               >
-                <div className="h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
+                <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
+                  <button
+                    onClick={() => toggleFavorite(product.id)}
+                    className="absolute top-4 right-4 z-10 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
+                  >
+                    {favorites.includes(product.id) ? "⭐" : "☆"}
+                  </button>
+
                   <img
                     src={getImageSrc(product.image)}
                     alt={product.name}
