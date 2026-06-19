@@ -9,6 +9,7 @@ type Product = {
   name: string;
   price: number;
   image: string;
+  images?: string[];
   stock: number;
 };
 
@@ -17,7 +18,7 @@ export default function AdminProductsPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,38 +34,54 @@ export default function AdminProductsPage() {
     setProducts(data || []);
   }
 
-  function getImageSrc(image: string) {
-    if (image.startsWith("http")) return image;
-    return `/${image.trim()}`;
+  function getImageSrc(product: Product) {
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+
+    if (product.image && product.image.startsWith("http")) {
+      return product.image;
+    }
+
+    return `/${product.image.trim()}`;
   }
 
   async function addProduct() {
-    if (!name || !price || !stock || !file) {
-      alert("Remplis tous les champs et choisis une photo.");
+    if (!name || !price || !stock || files.length === 0) {
+      alert("Remplis tous les champs et choisis au moins une photo.");
       return;
     }
 
     setLoading(true);
 
-    const fileName = `${Date.now()}-${file.name}`;
+    const uploadedUrls: string[] = [];
 
-    const { error: uploadError } = await supabase.storage
-      .from("products")
-      .upload(fileName, file);
+    for (const file of files) {
+      const fileName = `${Date.now()}-${Math.random()}-${file.name}`;
 
-    if (uploadError) {
-      alert("Erreur upload : " + uploadError.message);
-      setLoading(false);
-      return;
+      const { error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        alert("Erreur upload : " + uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from("products")
+        .getPublicUrl(fileName);
+
+      uploadedUrls.push(data.publicUrl);
     }
-
-    const { data } = supabase.storage.from("products").getPublicUrl(fileName);
 
     const { error } = await supabase.from("products").insert({
       name,
       price: Number(price),
-      image: data.publicUrl,
       stock: Number(stock),
+      image: uploadedUrls[0],
+      images: uploadedUrls,
     });
 
     if (error) {
@@ -76,11 +93,12 @@ export default function AdminProductsPage() {
     setName("");
     setPrice("");
     setStock("");
-    setFile(null);
-    await getProducts();
-    setLoading(false);
+    setFiles([]);
 
-    alert("Produit ajouté !");
+    await getProducts();
+
+    setLoading(false);
+    alert("Produit ajouté avec plusieurs photos !");
   }
 
   async function deleteProduct(id: number) {
@@ -166,10 +184,19 @@ export default function AdminProductsPage() {
           <input
             type="file"
             accept="image/*"
+            multiple
             className="rounded-2xl border border-black/10 bg-[#f7f1e8] p-4"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) =>
+              setFiles(e.target.files ? Array.from(e.target.files) : [])
+            }
           />
         </div>
+
+        {files.length > 0 && (
+          <p className="mt-3 text-gray-600">
+            {files.length} photo(s) sélectionnée(s)
+          </p>
+        )}
 
         <button
           onClick={addProduct}
@@ -188,7 +215,7 @@ export default function AdminProductsPage() {
           >
             <div className="h-80 bg-[#efe3d3] flex items-center justify-center">
               <img
-                src={getImageSrc(product.image)}
+                src={getImageSrc(product)}
                 alt={product.name}
                 className="h-full w-full object-contain"
               />
@@ -196,10 +223,16 @@ export default function AdminProductsPage() {
 
             <div className="p-5">
               <h2 className="text-xl font-black">{product.name}</h2>
+
               <p className="text-[#4db8df] text-2xl font-black mt-2">
                 {product.price} DA
               </p>
+
               <p className="text-gray-600 mt-1">Stock : {product.stock}</p>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Photos : {product.images?.length || 1}
+              </p>
 
               <button
                 onClick={() => updatePrice(product.id, product.price)}
