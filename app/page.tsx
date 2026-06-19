@@ -17,6 +17,114 @@ type CartItem = Product & {
   quantity: number;
 };
 
+function ProductCard({
+  product,
+  favorites,
+  toggleFavorite,
+  addToCart,
+}: {
+  product: Product;
+  favorites: number[];
+  toggleFavorite: (id: number) => void;
+  addToCart: (product: Product) => void;
+}) {
+  const images =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image];
+
+  const [currentImage, setCurrentImage] = useState(0);
+
+  function nextImage() {
+    setCurrentImage((prev) => (prev + 1) % images.length);
+  }
+
+  function prevImage() {
+    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  }
+
+  return (
+    <div className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition">
+      <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
+        <button
+          onClick={() => toggleFavorite(product.id)}
+          className="absolute top-4 right-4 z-20 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
+        >
+          {favorites.includes(product.id) ? "⭐" : "☆"}
+        </button>
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-4 z-20 h-11 w-11 rounded-full bg-white/90 shadow text-3xl font-bold"
+            >
+              ‹
+            </button>
+
+            <button
+              onClick={nextImage}
+              className="absolute right-4 z-20 h-11 w-11 rounded-full bg-white/90 shadow text-3xl font-bold"
+            >
+              ›
+            </button>
+          </>
+        )}
+
+        <img
+          src={images[currentImage]}
+          alt={product.name}
+          className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
+        />
+      </div>
+
+      {images.length > 1 && (
+        <div className="flex gap-2 p-3 overflow-x-auto bg-white">
+          {images.map((img, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentImage(index)}
+              className={`h-14 w-14 rounded-xl border overflow-hidden ${
+                currentImage === index ? "border-[#4db8df]" : "border-black/10"
+              }`}
+            >
+              <img src={img} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="p-5">
+        <h3 className="text-xl font-black">{product.name}</h3>
+
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-2xl font-black text-[#4db8df]">
+            {product.price} DA
+          </p>
+
+          <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
+            Stock : {product.stock}
+          </p>
+        </div>
+
+        {images.length > 1 && (
+          <p className="mt-2 text-sm text-gray-500">
+            {images.length} photos disponibles
+          </p>
+        )}
+
+        <button
+          onClick={() => addToCart(product)}
+          disabled={product.stock <= 0}
+          className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          {product.stock > 0 ? "Ajouter au panier" : "Rupture de stock"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
@@ -55,18 +163,6 @@ export default function Home() {
 
     return matchesSearch && matchesFavorite;
   });
-
-  function getImageSrc(product: Product) {
-    if (product.images && product.images.length > 0) {
-      return product.images[0];
-    }
-
-    if (product.image && product.image.startsWith("http")) {
-      return product.image;
-    }
-
-    return `/${product.image.trim()}`;
-  }
 
   function toggleFavorite(productId: number) {
     let updatedFavorites: number[];
@@ -234,55 +330,13 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
             {filteredProducts.map((product) => (
-              <div
+              <ProductCard
                 key={product.id}
-                className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition"
-              >
-                <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
-                  <button
-                    onClick={() => toggleFavorite(product.id)}
-                    className="absolute top-4 right-4 z-10 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
-                  >
-                    {favorites.includes(product.id) ? "⭐" : "☆"}
-                  </button>
-
-                  <img
-                    src={getImageSrc(product)}
-                    alt={product.name}
-                    className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="p-5">
-                  <h3 className="text-xl font-black">{product.name}</h3>
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-2xl font-black text-[#4db8df]">
-                      {product.price} DA
-                    </p>
-
-                    <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
-                      Stock : {product.stock}
-                    </p>
-                  </div>
-
-                  {product.images && product.images.length > 1 && (
-                    <p className="mt-2 text-sm text-gray-500">
-                      {product.images.length} photos disponibles
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock <= 0}
-                    className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    {product.stock > 0
-                      ? "Ajouter au panier"
-                      : "Rupture de stock"}
-                  </button>
-                </div>
-              </div>
+                product={product}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+                addToCart={addToCart}
+              />
             ))}
           </div>
         )}
