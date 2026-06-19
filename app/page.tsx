@@ -48,7 +48,7 @@ function ProductCard({
       <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
         <button
           onClick={() => toggleFavorite(product.id)}
-          className="absolute top-4 right-4 z-20 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
+          className="absolute top-4 right-4 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
         >
           {favorites.includes(product.id) ? "⭐" : "☆"}
         </button>
@@ -56,15 +56,17 @@ function ProductCard({
         {images.length > 1 && (
           <>
             <button
+              type="button"
               onClick={prevImage}
-              className="absolute left-4 z-20 h-11 w-11 rounded-full bg-white/90 shadow text-3xl font-bold"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ‹
             </button>
 
             <button
+              type="button"
               onClick={nextImage}
-              className="absolute right-4 z-20 h-11 w-11 rounded-full bg-white/90 shadow text-3xl font-bold"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ›
             </button>
@@ -83,9 +85,12 @@ function ProductCard({
           {images.map((img, index) => (
             <button
               key={index}
+              type="button"
               onClick={() => setCurrentImage(index)}
-              className={`h-14 w-14 rounded-xl border overflow-hidden ${
-                currentImage === index ? "border-[#4db8df]" : "border-black/10"
+              className={`h-16 w-16 shrink-0 rounded-xl border-2 overflow-hidden ${
+                currentImage === index
+                  ? "border-[#4db8df]"
+                  : "border-black/10"
               }`}
             >
               <img src={img} alt="" className="h-full w-full object-cover" />
@@ -109,7 +114,7 @@ function ProductCard({
 
         {images.length > 1 && (
           <p className="mt-2 text-sm text-gray-500">
-            {images.length} photos disponibles
+            Photo {currentImage + 1} / {images.length}
           </p>
         )}
 
