@@ -9,6 +9,7 @@ type Product = {
   name: string;
   price: number;
   image: string;
+  images?: string[];
   stock: number;
 };
 
@@ -55,9 +56,16 @@ export default function Home() {
     return matchesSearch && matchesFavorite;
   });
 
-  function getImageSrc(image: string) {
-    if (image.startsWith("http")) return image;
-    return `/${image.trim()}`;
+  function getImageSrc(product: Product) {
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+
+    if (product.image && product.image.startsWith("http")) {
+      return product.image;
+    }
+
+    return `/${product.image.trim()}`;
   }
 
   function toggleFavorite(productId: number) {
@@ -239,7 +247,7 @@ export default function Home() {
                   </button>
 
                   <img
-                    src={getImageSrc(product.image)}
+                    src={getImageSrc(product)}
                     alt={product.name}
                     className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
                   />
@@ -257,6 +265,12 @@ export default function Home() {
                       Stock : {product.stock}
                     </p>
                   </div>
+
+                  {product.images && product.images.length > 1 && (
+                    <p className="mt-2 text-sm text-gray-500">
+                      {product.images.length} photos disponibles
+                    </p>
+                  )}
 
                   <button
                     onClick={() => addToCart(product)}
