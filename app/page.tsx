@@ -8,6 +8,8 @@ type Product = {
   id: number;
   name: string;
   price: number;
+  old_price?: number | null;
+  promo_price?: number | null;
   image: string;
   images?: string[];
   stock: number;
@@ -43,12 +45,15 @@ function ProductCard({
     setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   }
 
+  const displayPrice = product.promo_price || product.price;
+
   return (
     <div className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition">
       <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
         <button
+          type="button"
           onClick={() => toggleFavorite(product.id)}
-          className="absolute top-4 right-4 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-2xl hover:scale-110 transition"
+          className="absolute top-4 right-4 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-2xl hover:scale-110 transition"
         >
           {favorites.includes(product.id) ? "⭐" : "☆"}
         </button>
@@ -58,7 +63,7 @@ function ProductCard({
             <button
               type="button"
               onClick={prevImage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-4xl font-bold flex items-center justify-center"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ‹
             </button>
@@ -66,7 +71,7 @@ function ProductCard({
             <button
               type="button"
               onClick={nextImage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-white/90 shadow-lg text-4xl font-bold flex items-center justify-center"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ›
             </button>
@@ -102,10 +107,23 @@ function ProductCard({
       <div className="p-5">
         <h3 className="text-xl font-black">{product.name}</h3>
 
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-2xl font-black text-[#4db8df]">
-            {product.price} DA
-          </p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div>
+            {product.old_price && product.promo_price ? (
+              <div>
+                <p className="text-gray-400 line-through text-lg font-bold">
+                  {product.old_price} DA
+                </p>
+                <p className="text-2xl font-black text-[#4db8df]">
+                  {product.promo_price} DA
+                </p>
+              </div>
+            ) : (
+              <p className="text-2xl font-black text-[#4db8df]">
+                {product.price} DA
+              </p>
+            )}
+          </div>
 
           <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
             Stock : {product.stock}
@@ -119,7 +137,7 @@ function ProductCard({
         )}
 
         <button
-          onClick={() => addToCart(product)}
+          onClick={() => addToCart({ ...product, price: displayPrice })}
           disabled={product.stock <= 0}
           className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
@@ -170,13 +188,9 @@ export default function Home() {
   });
 
   function toggleFavorite(productId: number) {
-    let updatedFavorites: number[];
-
-    if (favorites.includes(productId)) {
-      updatedFavorites = favorites.filter((id) => id !== productId);
-    } else {
-      updatedFavorites = [...favorites, productId];
-    }
+    const updatedFavorites = favorites.includes(productId)
+      ? favorites.filter((id) => id !== productId)
+      : [...favorites, productId];
 
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
