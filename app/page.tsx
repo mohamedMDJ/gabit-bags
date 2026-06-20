@@ -134,7 +134,7 @@ function ProductCard({
 
   {product.stock === 1 && (
     <p className="rounded-full px-4 py-2 text-sm font-bold bg-red-100 text-red-600">
-      Stock : 1
+      Dernière pièce
     </p>
   )}
 </>
