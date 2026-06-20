@@ -125,9 +125,21 @@ function ProductCard({
             )}
           </div>
 
-          <p className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-semibold">
-            Stock : {product.stock}
-          </p>
+    <p
+  className={`rounded-full px-4 py-2 text-sm font-bold ${
+    product.stock === 0
+      ? "bg-red-600 text-white"
+      : product.stock === 1
+      ? "bg-red-100 text-red-600"
+      : product.stock <= 3
+      ? "bg-orange-100 text-orange-600"
+      : "bg-[#f7f1e8] text-[#211815]"
+  }`}
+>
+  {product.stock === 0
+    ? "Rupture"
+    : `Stock : ${product.stock}`}
+</p>
         </div>
 
         {images.length > 1 && (
