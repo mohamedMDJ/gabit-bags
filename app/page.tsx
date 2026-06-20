@@ -256,25 +256,25 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-                className={`rounded-full px-4 py-3 font-bold shadow transition ${
-                  showOnlyFavorites
-                    ? "bg-[#4db8df] text-white"
-                    : "bg-[#f7f1e8] text-[#211815] hover:bg-[#4db8df] hover:text-white"
-                }`}
-              >
-                ⭐ {favorites.length}
-              </button>
+         <div className="flex flex-col items-end gap-3">
+  <Link
+    href="/cart"
+    className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
+  >
+    Panier
+  </Link>
 
-              <Link
-                href="/cart"
-                className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
-              >
-                Panier
-              </Link>
-            </div>
+  <button
+    onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+    className={`rounded-full px-4 py-3 font-bold shadow transition ${
+      showOnlyFavorites
+        ? "bg-[#4db8df] text-white"
+        : "bg-[#f7f1e8] text-[#211815] hover:bg-[#4db8df] hover:text-white"
+    }`}
+  >
+    ⭐ {favorites.length}
+  </button>
+</div>
           </nav>
 
           <section className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
