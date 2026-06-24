@@ -38,6 +38,7 @@ function ProductCard({
       : [];
 
   const [currentImage, setCurrentImage] = useState(0);
+  const [copied, setCopied] = useState(false);
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const displayPrice = product.promo_price || product.price;
 
@@ -46,19 +47,41 @@ function ProductCard({
     return `/${image.trim()}`;
   }
 
-  function copyProductLink() {
+  async function copyProductLink() {
     const link = `${window.location.origin}/#product-${product.id}`;
-    navigator.clipboard.writeText(link);
-    alert("Lien de l'article copié !");
+
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = link;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   }
 
-  function startTouchTimer() {
-    touchTimer.current = setTimeout(copyProductLink, 800);
+  function startTouchTimer(e: React.TouchEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest("button")) return;
+
+    touchTimer.current = setTimeout(() => {
+      copyProductLink();
+    }, 700);
   }
 
   function stopTouchTimer() {
-    if (touchTimer.current) clearTimeout(touchTimer.current);
-    touchTimer.current = null;
+    if (touchTimer.current) {
+      clearTimeout(touchTimer.current);
+      touchTimer.current = null;
+    }
   }
 
   return (
@@ -71,9 +94,15 @@ function ProductCard({
       onTouchStart={startTouchTimer}
       onTouchEnd={stopTouchTimer}
       onTouchCancel={stopTouchTimer}
-      className="group scroll-mt-10 overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition cursor-pointer"
+      className="group scroll-mt-10 overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition cursor-pointer select-none"
     >
       <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
+        {copied && (
+          <div className="absolute top-4 left-4 z-50 rounded-full bg-[#211815] px-4 py-2 text-sm font-bold text-white shadow-lg">
+            Lien copié
+          </div>
+        )}
+
         <button
           type="button"
           onClick={(e) => {
@@ -138,7 +167,11 @@ function ProductCard({
                 currentImage === index ? "border-[#4db8df]" : "border-black/10"
               }`}
             >
-              <img src={getImageSrc(img)} alt="" className="h-full w-full object-cover" />
+              <img
+                src={getImageSrc(img)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>
@@ -350,7 +383,8 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-xl text-gray-600 text-lg leading-8">
-                Découvrez les sacs GABIT : modernes, raffinés et pensés pour un style chic.
+                Découvrez les sacs GABIT : modernes, raffinés et pensés pour un
+                style chic.
               </p>
 
               <a
@@ -380,7 +414,9 @@ export default function Home() {
               {showOnlyFavorites ? "Mes favoris" : "Nos sacs"}
             </h2>
             <p className="mt-2 text-gray-600">
-              {showOnlyFavorites ? "Vos sacs préférés" : "Sélection officielle GABIT"}
+              {showOnlyFavorites
+                ? "Vos sacs préférés"
+                : "Sélection officielle GABIT"}
             </p>
           </div>
 
@@ -405,9 +441,10 @@ export default function Home() {
         {filteredProducts.length === 0 ? (
           <div className="rounded-[2rem] bg-white p-10 text-center shadow">
             <h3 className="text-2xl font-black">
-              {showOnlyFavorites ? "Aucun favori pour le moment" : "Aucun produit trouvé"}
+              {showOnlyFavorites
+                ? "Aucun favori pour le moment"
+                : "Aucun produit trouvé"}
             </h3>
-
             <p className="mt-2 text-gray-600">
               {showOnlyFavorites
                 ? "Clique sur ☆ pour ajouter un sac aux favoris."
