@@ -35,6 +35,7 @@ export default function CartPage() {
       if (item.id === id && item.quantity < item.stock) {
         return { ...item, quantity: item.quantity + 1 };
       }
+
       return item;
     });
 
@@ -47,6 +48,7 @@ export default function CartPage() {
         if (item.id === id) {
           return { ...item, quantity: item.quantity - 1 };
         }
+
         return item;
       })
       .filter((item) => item.quantity > 0);
@@ -59,7 +61,15 @@ export default function CartPage() {
     saveCart(newCart);
   }
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const articlesCount = cart.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   return (
     <main className="min-h-screen bg-[#f7f1e8] px-6 py-8 text-[#211815]">
@@ -71,9 +81,14 @@ export default function CartPage() {
               alt="GABIT"
               className="h-16 w-16 rounded-full object-cover shadow"
             />
+
             <div>
-              <h1 className="text-3xl font-black text-[#4db8df]">Panier</h1>
-              <p className="text-sm text-gray-600">Votre sélection GABIT</p>
+              <h1 className="text-3xl font-black text-[#4db8df]">
+                Panier
+              </h1>
+              <p className="text-sm text-gray-600">
+                Votre sélection GABIT
+              </p>
             </div>
           </Link>
 
@@ -90,10 +105,14 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-5">
           {cart.length === 0 ? (
             <div className="rounded-[2rem] bg-white p-10 text-center shadow">
-              <h2 className="text-3xl font-black">Votre panier est vide</h2>
+              <h2 className="text-3xl font-black">
+                Votre panier est vide
+              </h2>
+
               <p className="mt-2 text-gray-600">
                 Ajoutez vos sacs préférés depuis la boutique.
               </p>
+
               <Link
                 href="/"
                 className="inline-block mt-6 rounded-full bg-[#4db8df] px-8 py-4 text-white font-bold"
@@ -114,11 +133,25 @@ export default function CartPage() {
                 />
 
                 <div className="flex-1">
-                  <h2 className="text-xl font-black">{item.name}</h2>
-                  <p className="mt-1 text-[#4db8df] font-black">
-                    {item.price} DA
-                  </p>
-                  <p className="text-sm text-gray-500">Stock : {item.stock}</p>
+                  <h2 className="text-xl font-black">
+                    {item.name}
+                  </h2>
+
+                  <div className="mt-1">
+                    <p className="text-[#4db8df] font-black text-xl">
+                      {item.price} DA
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-gray-500">
+                      + frais de livraison
+                    </p>
+                  </div>
+
+                  {item.stock === 1 && (
+                    <p className="mt-2 inline-block rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-600">
+                      Dernière pièce
+                    </p>
+                  )}
 
                   <div className="mt-4 flex items-center gap-3">
                     <button
@@ -128,11 +161,14 @@ export default function CartPage() {
                       -
                     </button>
 
-                    <span className="font-bold">{item.quantity}</span>
+                    <span className="font-bold">
+                      {item.quantity}
+                    </span>
 
                     <button
                       onClick={() => increaseQuantity(item.id)}
-                      className="h-9 w-9 rounded-full bg-[#211815] text-white font-bold"
+                      disabled={item.quantity >= item.stock}
+                      className="h-9 w-9 rounded-full bg-[#211815] text-white font-bold disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
                       +
                     </button>
@@ -151,23 +187,38 @@ export default function CartPage() {
         </div>
 
         <aside className="rounded-[2rem] bg-white p-6 shadow-xl border border-black/5 h-fit">
-          <h2 className="text-3xl font-black">Résumé</h2>
+          <h2 className="text-3xl font-black">
+            Résumé
+          </h2>
 
           <div className="mt-6 space-y-3">
             <div className="flex justify-between text-gray-600">
               <span>Articles</span>
-              <span>{cart.length}</span>
+              <span>{articlesCount}</span>
             </div>
 
             <div className="flex justify-between text-2xl font-black">
               <span>Total</span>
-              <span className="text-[#4db8df]">{total} DA</span>
+
+              <div className="text-right">
+                <p className="text-[#4db8df]">
+                  {total} DA
+                </p>
+
+                <p className="mt-1 text-sm font-semibold text-gray-500">
+                  + frais de livraison
+                </p>
+              </div>
             </div>
           </div>
 
           <Link
             href="/checkout"
-            className="mt-6 block rounded-full bg-[#4db8df] py-4 text-center text-white font-black shadow-lg hover:scale-105 transition"
+            className={`mt-6 block rounded-full py-4 text-center text-white font-black shadow-lg transition ${
+              cart.length === 0
+                ? "bg-gray-300 pointer-events-none"
+                : "bg-[#4db8df] hover:scale-105"
+            }`}
           >
             Passer la commande
           </Link>
