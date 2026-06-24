@@ -30,6 +30,12 @@ export default function CartPage() {
     return `/${image.trim()}`;
   }
 
+  function copyProductLink(id: number) {
+    const link = `${window.location.origin}/#product-${id}`;
+    navigator.clipboard.writeText(link);
+    alert("Lien de l'article copié !");
+  }
+
   function increaseQuantity(id: number) {
     const newCart = cart.map((item) => {
       if (item.id === id && item.quantity < item.stock) {
@@ -121,68 +127,91 @@ export default function CartPage() {
               </Link>
             </div>
           ) : (
-            cart.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-[2rem] bg-white p-4 shadow-md border border-black/5 flex gap-4"
-              >
-                <img
-                  src={getImageSrc(item.image)}
-                  alt={item.name}
-                  className="h-32 w-32 rounded-2xl object-contain bg-[#efe3d3]"
-                />
+            cart.map((item) => {
+              let touchTimer: ReturnType<typeof setTimeout>;
 
-                <div className="flex-1">
-                  <h2 className="text-xl font-black">
-                    {item.name}
-                  </h2>
-
-                  <div className="mt-1">
-                    <p className="text-[#4db8df] font-black text-xl">
-                      {item.price} DA
-                    </p>
-
-                    <p className="mt-1 text-sm font-semibold text-gray-500">
-                      + frais de livraison
-                    </p>
-                  </div>
-
-                  {item.stock === 1 && (
-                    <p className="mt-2 inline-block rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-600">
-                      Dernière pièce
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex items-center gap-3">
-                    <button
-                      onClick={() => decreaseQuantity(item.id)}
-                      className="h-9 w-9 rounded-full bg-[#f7f1e8] font-bold"
-                    >
-                      -
-                    </button>
-
-                    <span className="font-bold">
-                      {item.quantity}
-                    </span>
-
-                    <button
-                      onClick={() => increaseQuantity(item.id)}
-                      disabled={item.quantity >= item.stock}
-                      className="h-9 w-9 rounded-full bg-[#211815] text-white font-bold disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="self-start rounded-full bg-red-500 px-4 py-2 text-white text-sm font-bold"
+              return (
+                <div
+                  key={item.id}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    copyProductLink(item.id);
+                  }}
+                  onTouchStart={() => {
+                    touchTimer = setTimeout(() => {
+                      copyProductLink(item.id);
+                    }, 800);
+                  }}
+                  onTouchEnd={() => clearTimeout(touchTimer)}
+                  className="rounded-[2rem] bg-white p-4 shadow-md border border-black/5 flex gap-4 cursor-pointer"
                 >
-                  Supprimer
-                </button>
-              </div>
-            ))
+                  <img
+                    src={getImageSrc(item.image)}
+                    alt={item.name}
+                    className="h-32 w-32 rounded-2xl object-contain bg-[#efe3d3]"
+                  />
+
+                  <div className="flex-1">
+                    <h2 className="text-xl font-black">
+                      {item.name}
+                    </h2>
+
+                    <div className="mt-1">
+                      <p className="text-[#4db8df] font-black text-xl">
+                        {item.price} DA
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold text-gray-500">
+                        + frais de livraison
+                      </p>
+                    </div>
+
+                    {item.stock === 1 && (
+                      <p className="mt-2 inline-block rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-600">
+                        Dernière pièce
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          decreaseQuantity(item.id);
+                        }}
+                        className="h-9 w-9 rounded-full bg-[#f7f1e8] font-bold"
+                      >
+                        -
+                      </button>
+
+                      <span className="font-bold">
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          increaseQuantity(item.id);
+                        }}
+                        disabled={item.quantity >= item.stock}
+                        className="h-9 w-9 rounded-full bg-[#211815] text-white font-bold disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeItem(item.id);
+                    }}
+                    className="self-start rounded-full bg-red-500 px-4 py-2 text-white text-sm font-bold"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
 
