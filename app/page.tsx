@@ -39,7 +39,7 @@ function ProductCard({
 
   const [currentImage, setCurrentImage] = useState(0);
   const [copied, setCopied] = useState(false);
-  const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartTime = useRef(0);
   const displayPrice = product.promo_price || product.price;
 
   function getImageSrc(image: string) {
@@ -57,7 +57,6 @@ function ProductCard({
       textarea.value = link;
       textarea.style.position = "fixed";
       textarea.style.left = "-9999px";
-      textarea.style.top = "-9999px";
       document.body.appendChild(textarea);
       textarea.focus();
       textarea.select();
@@ -71,16 +70,16 @@ function ProductCard({
 
   function startTouchTimer(e: React.TouchEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest("button")) return;
-
-    touchTimer.current = setTimeout(() => {
-      copyProductLink();
-    }, 700);
+    touchStartTime.current = Date.now();
   }
 
-  function stopTouchTimer() {
-    if (touchTimer.current) {
-      clearTimeout(touchTimer.current);
-      touchTimer.current = null;
+  function stopTouchTimer(e: React.TouchEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest("button")) return;
+
+    const duration = Date.now() - touchStartTime.current;
+
+    if (duration >= 700) {
+      copyProductLink();
     }
   }
 
