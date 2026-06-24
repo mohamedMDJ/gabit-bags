@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -11,7 +11,7 @@ type Product = {
   old_price?: number | null;
   promo_price?: number | null;
   image: string;
-  images?: string[];
+  images?: string[] | null;
   stock: number;
 };
 
@@ -33,26 +33,66 @@ function ProductCard({
   const images =
     product.images && product.images.length > 0
       ? product.images
-      : [product.image];
+      : product.image
+      ? [product.image]
+      : [];
 
   const [currentImage, setCurrentImage] = useState(0);
-
-  function nextImage() {
-    setCurrentImage((prev) => (prev + 1) % images.length);
-  }
-
-  function prevImage() {
-    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  }
+  const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const displayPrice = product.promo_price || product.price;
 
+  function getImageSrc(image: string) {
+    if (image.startsWith("http")) return image;
+    return `/${image.trim()}`;
+  }
+
+  function copyProductLink() {
+    const link = `${window.location.origin}/#product-${product.id}`;
+    navigator.clipboard.writeText(link);
+    alert("Lien de l'article copié !");
+  }
+
+  function startTouchTimer() {
+    touchTimer.current = setTimeout(copyProductLink, 800);
+  }
+
+  function stopTouchTimer() {
+    if (touchTimer.current) {
+      clearTimeout(touchTimer.current);
+      touchTimer.current = null;
+    }
+  }
+
+  function nextImage(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    setCurrentImage((prev) => (prev + 1) % images.length);
+  }
+
+  function prevImage(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  }
+
   return (
-    <div className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition">
+    <div
+      id={`product-${product.id}`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        copyProductLink();
+      }}
+      onTouchStart={startTouchTimer}
+      onTouchEnd={stopTouchTimer}
+      onTouchCancel={stopTouchTimer}
+      className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition cursor-pointer"
+    >
       <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
         <button
           type="button"
-          onClick={() => toggleFavorite(product.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite(product.id);
+          }}
           className="absolute top-4 right-4 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-2xl hover:scale-110 transition"
         >
           {favorites.includes(product.id) ? "⭐" : "☆"}
@@ -78,11 +118,15 @@ function ProductCard({
           </>
         )}
 
-        <img
-          src={images[currentImage]}
-          alt={product.name}
-          className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-        />
+        {images.length > 0 ? (
+          <img
+            src={getImageSrc(images[currentImage])}
+            alt={product.name}
+            className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <p className="text-gray-500">Aucune photo</p>
+        )}
       </div>
 
       {images.length > 1 && (
@@ -91,14 +135,19 @@ function ProductCard({
             <button
               key={index}
               type="button"
-              onClick={() => setCurrentImage(index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImage(index);
+              }}
               className={`h-16 w-16 shrink-0 rounded-xl border-2 overflow-hidden ${
-                currentImage === index
-                  ? "border-[#4db8df]"
-                  : "border-black/10"
+                currentImage === index ? "border-[#4db8df]" : "border-black/10"
               }`}
             >
-              <img src={img} alt="" className="h-full w-full object-cover" />
+              <img
+                src={getImageSrc(img)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>
@@ -110,14 +159,14 @@ function ProductCard({
         <div className="mt-3 flex items-center justify-between gap-3">
           <div>
             {product.old_price && product.promo_price ? (
-              <div>
+              <>
                 <p className="text-gray-400 line-through text-lg font-bold">
                   {product.old_price} DA
                 </p>
                 <p className="text-2xl font-black text-[#4db8df]">
                   {product.promo_price} DA
                 </p>
-              </div>
+              </>
             ) : (
               <p className="text-2xl font-black text-[#4db8df]">
                 {product.price} DA
@@ -125,19 +174,17 @@ function ProductCard({
             )}
           </div>
 
-   <>
-  {product.stock === 0 && (
-    <p className="rounded-full px-4 py-2 text-sm font-bold bg-red-600 text-white">
-      Rupture
-    </p>
-  )}
+          {product.stock === 0 && (
+            <p className="rounded-full px-4 py-2 text-sm font-bold bg-red-600 text-white">
+              Rupture
+            </p>
+          )}
 
-  {product.stock === 1 && (
-    <p className="rounded-full px-4 py-2 text-sm font-bold bg-red-100 text-red-600">
-      Dernière pièce
-    </p>
-  )}
-</>
+          {product.stock === 1 && (
+            <p className="rounded-full px-4 py-2 text-sm font-bold bg-red-100 text-red-600">
+              Dernière pièce
+            </p>
+          )}
         </div>
 
         {images.length > 1 && (
@@ -147,7 +194,10 @@ function ProductCard({
         )}
 
         <button
-          onClick={() => addToCart({ ...product, price: displayPrice })}
+          onClick={(e) => {
+            e.stopPropagation();
+            addToCart({ ...product, price: displayPrice });
+          }}
           disabled={product.stock <= 0}
           className="mt-5 w-full rounded-full bg-[#211815] py-4 font-bold text-white shadow-lg hover:bg-[#4db8df] transition disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
@@ -238,7 +288,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#f7f1e8] text-[#211815]">
       <header className="px-6 py-10">
         <div className="mx-auto max-w-7xl rounded-[2rem] bg-white/70 shadow-xl border border-white p-6 md:p-10">
-          <nav className="flex items-center justify-between gap-4">
+          <nav className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <img
                 src="/logo-gabit.jpg"
@@ -256,25 +306,25 @@ export default function Home() {
               </div>
             </div>
 
-         <div className="flex flex-col items-end gap-3">
-  <Link
-    href="/cart"
-    className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
-  >
-    Panier
-  </Link>
+            <div className="flex flex-col items-end gap-3">
+              <Link
+                href="/cart"
+                className="rounded-full bg-[#211815] px-5 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:bg-[#4db8df] transition"
+              >
+                Panier
+              </Link>
 
-  <button
-    onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-    className={`rounded-full px-4 py-3 font-bold shadow transition ${
-      showOnlyFavorites
-        ? "bg-[#4db8df] text-white"
-        : "bg-[#f7f1e8] text-[#211815] hover:bg-[#4db8df] hover:text-white"
-    }`}
-  >
-    ⭐ {favorites.length}
-  </button>
-</div>
+              <button
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                className={`rounded-full px-4 py-3 font-bold shadow transition ${
+                  showOnlyFavorites
+                    ? "bg-[#4db8df] text-white"
+                    : "bg-[#f7f1e8] text-[#211815] hover:bg-[#4db8df] hover:text-white"
+                }`}
+              >
+                ⭐ {favorites.length}
+              </button>
+            </div>
           </nav>
 
           <section className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
