@@ -39,7 +39,6 @@ function ProductCard({
 
   const [currentImage, setCurrentImage] = useState(0);
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const displayPrice = product.promo_price || product.price;
 
   function getImageSrc(image: string) {
@@ -58,20 +57,8 @@ function ProductCard({
   }
 
   function stopTouchTimer() {
-    if (touchTimer.current) {
-      clearTimeout(touchTimer.current);
-      touchTimer.current = null;
-    }
-  }
-
-  function nextImage(e: React.MouseEvent<HTMLButtonElement>) {
-    e.stopPropagation();
-    setCurrentImage((prev) => (prev + 1) % images.length);
-  }
-
-  function prevImage(e: React.MouseEvent<HTMLButtonElement>) {
-    e.stopPropagation();
-    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    if (touchTimer.current) clearTimeout(touchTimer.current);
+    touchTimer.current = null;
   }
 
   return (
@@ -84,7 +71,7 @@ function ProductCard({
       onTouchStart={startTouchTimer}
       onTouchEnd={stopTouchTimer}
       onTouchCancel={stopTouchTimer}
-      className="group overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition cursor-pointer"
+      className="group scroll-mt-10 overflow-hidden rounded-[2rem] bg-white shadow-md border border-black/5 hover:shadow-2xl transition cursor-pointer"
     >
       <div className="relative h-96 bg-[#efe3d3] overflow-hidden flex items-center justify-center">
         <button
@@ -102,7 +89,12 @@ function ProductCard({
           <>
             <button
               type="button"
-              onClick={prevImage}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImage((prev) =>
+                  prev === 0 ? images.length - 1 : prev - 1
+                );
+              }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ‹
@@ -110,7 +102,10 @@ function ProductCard({
 
             <button
               type="button"
-              onClick={nextImage}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImage((prev) => (prev + 1) % images.length);
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-40 h-12 w-12 rounded-full bg-white shadow-lg text-4xl font-bold flex items-center justify-center"
             >
               ›
@@ -143,11 +138,7 @@ function ProductCard({
                 currentImage === index ? "border-[#4db8df]" : "border-black/10"
               }`}
             >
-              <img
-                src={getImageSrc(img)}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={getImageSrc(img)} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -235,6 +226,31 @@ export default function Home() {
     setFavorites(savedFavorites);
   }, []);
 
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    const hash = window.location.hash;
+
+    if (hash) {
+      setTimeout(() => {
+        const element = document.querySelector(hash);
+
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          element.classList.add("ring-4", "ring-[#4db8df]");
+
+          setTimeout(() => {
+            element.classList.remove("ring-4", "ring-[#4db8df]");
+          }, 2500);
+        }
+      }, 500);
+    }
+  }, [products]);
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
@@ -254,10 +270,6 @@ export default function Home() {
 
     setFavorites(updatedFavorites);
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-
-    if (showOnlyFavorites && updatedFavorites.length === 0) {
-      setShowOnlyFavorites(false);
-    }
   }
 
   function addToCart(product: Product) {
@@ -338,8 +350,7 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-xl text-gray-600 text-lg leading-8">
-                Découvrez les sacs GABIT : modernes, raffinés et pensés pour un
-                style chic.
+                Découvrez les sacs GABIT : modernes, raffinés et pensés pour un style chic.
               </p>
 
               <a
@@ -369,9 +380,7 @@ export default function Home() {
               {showOnlyFavorites ? "Mes favoris" : "Nos sacs"}
             </h2>
             <p className="mt-2 text-gray-600">
-              {showOnlyFavorites
-                ? "Vos sacs préférés"
-                : "Sélection officielle GABIT"}
+              {showOnlyFavorites ? "Vos sacs préférés" : "Sélection officielle GABIT"}
             </p>
           </div>
 
@@ -396,10 +405,9 @@ export default function Home() {
         {filteredProducts.length === 0 ? (
           <div className="rounded-[2rem] bg-white p-10 text-center shadow">
             <h3 className="text-2xl font-black">
-              {showOnlyFavorites
-                ? "Aucun favori pour le moment"
-                : "Aucun produit trouvé"}
+              {showOnlyFavorites ? "Aucun favori pour le moment" : "Aucun produit trouvé"}
             </h3>
+
             <p className="mt-2 text-gray-600">
               {showOnlyFavorites
                 ? "Clique sur ☆ pour ajouter un sac aux favoris."
